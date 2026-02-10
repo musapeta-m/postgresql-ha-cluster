@@ -1,0 +1,64 @@
+# ==========================================================
+# Patroni Configuration Template for 3-Node HA Cluster
+# ==========================================================
+# Note: This is a template. Sensitive credentials have been 
+# replaced with placeholders (e.g., <PASSWORD>).
+
+scope: postgres_ha_prod  # The name of the cluster
+namespace: /service/     # The path in etcd where Patroni stores state
+name: node_1             # Unique name for this specific node
+
+# --- Distributed Configuration Store (etcd) ---
+etcd3:
+  hosts: 
+    - 10.0.0.11:2379
+    - 10.0.0.12:2379
+    - 10.0.0.13:2379 # The Witness node is included in this consensus
+  # auth:
+  #   username: patroni
+  #   password: <ETCD_PASSWORD>
+
+# --- Bootstrap Configuration (Applied when cluster is created) ---
+bootstrap:
+  dcs:
+    ttl: 30                     # Time-to-live for the leader key
+    loop_wait: 10               # Check interval for health
+    retry_timeout: 10
+    maximum_lag_on_failover: 1048576 # 1MB limit to prevent data loss
+    
+    postgresql:
+      use_pg_rewind: true       # Allows failed primary to re-sync automatically
+      use_slots: true           # Uses replication slots to prevent WAL bloat
+      parameters:
+        wal_level: logical      # Set for potential CDC or logical replication
+        max_wal_senders: 10
+        max_replication_slots: 10
+        hot_standby: "on"
+        # Architect choice: Sync replication for zero data loss
+        synchronous_commit: "on"
+        synchronous_standby_names: "*"
+
+# --- PostgreSQL Local Configuration ---
+postgresql:
+  listen: 0.0.0.1:5432
+  connect_address: 10.0.0.11:5432
+  data_dir: /var/lib/postgresql/17/main
+  bin_dir: /usr/lib/postgresql/17/bin
+  config_dir: /etc/postgresql/17/main
+  
+  authentication:
+    replication:
+      username: replicator
+      password: <REPLICATION_PASSWORD>
+    superuser:
+      username: postgres
+      password: <SUPERUSER_PASSWORD>
+
+# --- REST API (For Health Checks & HAProxy) ---
+restapi:
+  listen: 0.0.0.1:8008
+  connect_address: 10.0.0.11:8008
+
+# --- Watchdog (Hardware Fencing) ---
+watchdog:
+  mode: required # Ensures the node reboots if Patroni hangs
