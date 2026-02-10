@@ -1,0 +1,36 @@
+# ==========================================================
+# etcd 3.x Configuration Template for HA Consensus
+# ==========================================================
+# This config ensures the 3-node Patroni cluster can reach 
+# consensus and handle leader elections safely.
+
+# --- Member Settings ---
+name: 'etcd-node-1' # Unique name for this member
+data-dir: '/var/lib/etcd/default.etcd'
+
+# --- Network: Client & Peer Communication ---
+# Port 2379: Listen for Patroni/Client requests
+# Port 2380: Listen for internal etcd peer heartbeats
+listen-client-urls: http://10.0.0.11:2379,http://127.0.0.1:2379
+advertise-client-urls: http://10.0.0.11:2379
+
+listen-peer-urls: http://10.0.0.11:2380
+initial-advertise-peer-urls: http://10.0.0.11:2380
+
+# --- Clustering Infrastructure ---
+# This section defines the "Static Cluster" to avoid discovery issues
+initial-cluster-token: 'etcd-cluster-1'
+initial-cluster: etcd-node-1=http://10.0.0.11:2380,etcd-node-2=http://10.0.0.12:2380,etcd-witness=http://10.0.0.13:2380
+
+# Critical Architect Setting: 
+# Set to 'new' for bootstrapping the 3 nodes for the first time.
+initial-cluster-state: 'new'
+
+# --- Security & Performance ---
+# Heartbeat interval (ms) and Election timeout (ms)
+# Tuned for network stability
+heartbeat-interval: 100
+election-timeout: 1000
+
+# Snapshotting settings to keep logs clean
+snapshot-count: 10000
