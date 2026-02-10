@@ -55,4 +55,4 @@ To validate this architecture, I performed the following "Day 2" operations:
 ---
 
 ## 🤝 Contact
-**[Your Name]** *Data Architect / Database Administrator* [Your LinkedIn Profile Link] | [Your Professional Email]
+**MEGNA** *Data Architect / Database Administrator*.
