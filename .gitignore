@@ -1,0 +1,5 @@
+patroni.yml
+pbackrest.conf
+*.log
+data/
+.venv/
